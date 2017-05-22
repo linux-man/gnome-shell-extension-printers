@@ -1,6 +1,8 @@
 # gnome-shell-extension-printers
 Gnome extension - Manage Jobs and Printers
 
+![Screenshot](https://raw.githubusercontent.com/linux-man/gnome-shell-extension-printers/master/screenshot.png)
+
 #### License [GPL-3+](LICENSE)
 
 This extension is a fork of [cinnamon-printers](https://github.com/linux-man/cinnamon-printers).
