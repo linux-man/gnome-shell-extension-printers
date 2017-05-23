@@ -20,3 +20,5 @@ Swedish translation by [eson57](https://github.com/eson57)
 Chinese translation by [giwhub](https://github.com/giwhub)
 
 Croatian translation by [muzena](https://github.com/muzena)
+
+Polish translation by [pkomur](https://github.com/pkomur)
