@@ -110,7 +110,7 @@ const PrintersManager = new Lang.Class({
         spawn_async(['/usr/bin/lpstat', '-a'], Lang.bind(this, function(out) {
             this.printers = [];
             spawn_async(['/usr/bin/lpstat', '-d'], Lang.bind(this, function(out2) {//To check default printer
-                if(out2.substring(0, 2) != 'no') out2 = out2.split(': ')[1].trim();
+                if(out2.split(': ')[1] != undefined) out2 = out2.split(': ')[1].trim();
                 else out2 = 'no default';
                 out = out.split('\n');
                 this.printersCount = out.length - 1;
