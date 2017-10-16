@@ -22,3 +22,5 @@ Chinese translation by [giwhub](https://github.com/giwhub)
 Croatian translation by [muzena](https://github.com/muzena)
 
 Polish translation by [pkomur](https://github.com/pkomur)
+
+Italian translation by Albano Battistella
