@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-11 03:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: Christophe Hortemel\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -23,7 +23,7 @@ msgstr "Imprimantes"
 
 #: ../extension.js:136
 msgid "Cancel all jobs"
-msgstr "Annuler tout travail"
+msgstr "Annuler tout les travaux"
 
 #: ../extension.js:157
 msgid "at"
@@ -57,7 +57,7 @@ msgstr "Toujours"
 
 #: ../prefs.js:59
 msgid "When printers exist"
-msgstr "Quand les imprimantes existent"
+msgstr "Quand les imprimantes sont présentes"
 
 #: ../prefs.js:61
 msgid "When printing"
@@ -71,12 +71,12 @@ msgstr "Affiche l'icône d'erreur d'impression"
 #. show-jobs
 #: ../prefs.js:79
 msgid "Show documents count next to icon"
-msgstr "Afficher les documents comptent à côté de l'icône"
+msgstr "Afficher le compteur de documents à côté de l'icône"
 
 #. job-number
 #: ../prefs.js:88
 msgid "Show each document number on print list"
-msgstr "Montrez à chaque numéro de document sur la liste d'impression"
+msgstr "Montrez les numéros de document sur la liste d'impression"
 
 #. send-to-front
 #: ../prefs.js:97
