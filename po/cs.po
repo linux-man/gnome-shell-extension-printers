@@ -36,11 +36,11 @@ msgstr "Odeslat do tiskové fronty"
 #. interface
 #: ../prefs.js:28
 msgid "Interface"
-msgstr "Interface"
+msgstr "Rozhraní"
 
 #: ../prefs.js:37
 msgid "Gnome Control Center"
-msgstr "Gnome Control Center"
+msgstr "Ovládací centrum Gnome"
 
 #: ../prefs.js:39
 msgid "system-config-printer"
@@ -49,7 +49,7 @@ msgstr "system-config-printer"
 #. show-icon
 #: ../prefs.js:48
 msgid "Show icon"
-msgstr "Zobrazit ikonu"
+msgstr "Ikonu zobrazovat"
 
 #: ../prefs.js:57
 msgid "Always"
@@ -57,7 +57,7 @@ msgstr "Vždy"
 
 #: ../prefs.js:59
 msgid "When printers exist"
-msgstr "Pokud existuje tiskárna"
+msgstr "Pokud existují tiskárny"
 
 #: ../prefs.js:61
 msgid "When printing"
@@ -71,14 +71,14 @@ msgstr "Zobrazovat ikonu chyby tiskárny"
 #. show-jobs
 #: ../prefs.js:79
 msgid "Show documents count next to icon"
-msgstr "Zobrazovat počet dokumentů vedle ikony"
+msgstr "Zobrazovat vedle ikony počet dokumentů"
 
 #. job-number
 #: ../prefs.js:88
 msgid "Show each document number on print list"
-msgstr "Zobrazovat číslo dokumentu na seznamu tisku"
+msgstr "Zobrazovat v seznamu tisků číslo dokumentu"
 
 #. send-to-front
 #: ../prefs.js:97
 msgid "Documents can be sent to front"
-msgstr "Dokument bude odeslán do tiskové fronty"
+msgstr "Tisková fronta připravena prijímat dokumenty"
