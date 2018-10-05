@@ -68,7 +68,7 @@ const PrintersSettings = new GObject.Class({
 
         //show-error
         label = new Gtk.Label({label: _('Show printer error icon') + ': ', xalign: 0, hexpand: true});
-        this._showErrorCheckbox = new Gtk.Switch();
+        this._showErrorCheckbox = new Gtk.Switch({halign: Gtk.Align.END});
         this._showErrorCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
             this._settings.set_boolean('show-error', button.active);
         }));
@@ -77,7 +77,7 @@ const PrintersSettings = new GObject.Class({
 
         //show-jobs
         label = new Gtk.Label({label: _('Show documents count next to icon') + ': ', xalign: 0, hexpand: true});
-        this._showJobsCheckbox = new Gtk.Switch();
+        this._showJobsCheckbox = new Gtk.Switch({halign: Gtk.Align.END});
         this._showJobsCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
             this._settings.set_boolean('show-jobs', button.active);
         }));
@@ -86,7 +86,7 @@ const PrintersSettings = new GObject.Class({
 
         //job-number
         label = new Gtk.Label({label: _('Show each document number on print list') + ': ', xalign: 0, hexpand: true});
-        this._jobNumberCheckbox = new Gtk.Switch();
+        this._jobNumberCheckbox = new Gtk.Switch({halign: Gtk.Align.END});
         this._jobNumberCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
             this._settings.set_boolean('job-number', button.active);
         }));
@@ -95,7 +95,7 @@ const PrintersSettings = new GObject.Class({
 
         //send-to-front
         label = new Gtk.Label({label: _('Documents can be sent to front') + ': ', xalign: 0, hexpand: true});
-        this._sendToFrontCheckbox = new Gtk.Switch();
+        this._sendToFrontCheckbox = new Gtk.Switch({halign: Gtk.Align.END});
         this._sendToFrontCheckbox.connect('notify::active',  Lang.bind(this, function(button) {
             this._settings.set_boolean('send-to-front', button.active);
         }));
