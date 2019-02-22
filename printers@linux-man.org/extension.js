@@ -9,6 +9,7 @@ const Clutter = imports.gi.Clutter;
 const Util = imports.misc.util;
 const GLib = imports.gi.GLib;
 const Mainloop = imports.mainloop;
+const ByteArray = imports.byteArray;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
@@ -28,7 +29,7 @@ function spawn_async(args, callback) {
         let out_reader = new Gio.DataInputStream({base_stream: new Gio.UnixInputStream({fd: out_fd})});
         let [out, size] = out_reader.read_line(null);
         while (out !== null) {
-            strOUT += out + '\n';
+            strOUT += ByteArray.toString(out) + '\n';
             [out, size] = out_reader.read_line(null);
         }
     }
