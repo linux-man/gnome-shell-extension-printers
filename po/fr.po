@@ -23,7 +23,7 @@ msgstr "Imprimantes"
 
 #: ../extension.js:136
 msgid "Cancel all jobs"
-msgstr "Annuler tout les travaux"
+msgstr "Annuler tous les travaux"
 
 #: ../extension.js:157
 msgid "at"
@@ -76,7 +76,7 @@ msgstr "Afficher le compteur de documents à côté de l'icône"
 #. job-number
 #: ../prefs.js:88
 msgid "Show each document number on print list"
-msgstr "Montrez les numéros de document sur la liste d'impression"
+msgstr "Montrer les numéros de document sur la liste d'impression"
 
 #. send-to-front
 #: ../prefs.js:97
