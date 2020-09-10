@@ -40,8 +40,8 @@ function PopupIconMenuItem(icon, label) {
     let _item = new PopupMenu.PopupBaseMenuItem();
     let _icon = new St.Icon({ icon_name: icon, style_class: 'popup-menu-icon' });
     let _label = new St.Label({ text: label });
-    _item.actor.add(_icon);
-    _item.actor.add(_label);
+    _item.add(_icon);
+    _item.add(_label);
     return _item;
 }
 
@@ -65,7 +65,7 @@ const PrintersManager = new Lang.Class({
 
     hbox.add_child(this._icon);
     hbox.add_child(this._jobs);
-    this.actor.add_child(hbox);
+    this.add_child(hbox);
 
     this._settings = Convenience.getSettings();
     this._settings.connect('changed', Lang.bind(this, this.onCupsSignal));
@@ -122,7 +122,7 @@ const PrintersManager = new Lang.Class({
                         this.printers.push(printer);
                         if(this.connect_to == 1) {
                             let printerItem = PopupIconMenuItem('emblem-documents-symbolic', printer);
-                            if(out2.toString() == printer.toString()) printerItem.actor.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
+                            if(out2.toString() == printer.toString()) printerItem.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
                             printerItem.printer = printer;
                             printerItem.connect('activate', Lang.bind(this, this.onShowJobsClicked));
                             this.menu.addMenuItem(printerItem);
@@ -157,7 +157,7 @@ const PrintersManager = new Lang.Class({
                             if(this.job_number) text += ' (' + job + ')';
                             text += ' ' + _('at') + ' ' + printer;
                             let jobItem = PopupIconMenuItem('edit-delete-symbolic', text);
-                            if(out2[out2.indexOf(job) - 2] == 'active') jobItem.actor.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
+                            if(out2[out2.indexOf(job) - 2] == 'active') jobItem.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
                             jobItem.job = job;
                             jobItem.connect('activate', Lang.bind(jobItem, this.onCancelJobClicked));
                             this.menu.addMenuItem(jobItem);
@@ -176,9 +176,9 @@ const PrintersManager = new Lang.Class({
 //Update Icon
                         if(this.jobsCount > 0 && this.show_jobs) this._jobs.text = this.jobsCount.toString();
                         else this._jobs.text = '';
-                        this.actor.show();
-                        if(this.show_icon == 0 || (this.show_icon == 1 && this.printersCount > 0) || (this.show_icon == 2 && this.jobsCount > 0)) this.actor.show();
-                        else this.actor.hide();
+                        this.show();
+                        if(this.show_icon == 0 || (this.show_icon == 1 && this.printersCount > 0) || (this.show_icon == 2 && this.jobsCount > 0)) this.show();
+                        else this.hide();
                         spawn_async(['/usr/bin/lpstat', '-l'], Lang.bind(this, function(out) {
                             this.printError = out.indexOf('Unable') >= 0 || out.indexOf(' not ') >= 0 || out.indexOf(' failed') >= 0;
                             if(this.printWarning) this._icon.icon_name = warningIcon;
