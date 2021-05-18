@@ -1,19 +1,16 @@
+const { Clutter, Gio, GLib, St } = imports.gi;
+
 const Lang = imports.lang;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const St = imports.gi.St;
-const Gio = imports.gi.Gio;
 
-const Clutter = imports.gi.Clutter;
 const Util = imports.misc.util;
-const GLib = imports.gi.GLib;
 const Mainloop = imports.mainloop;
 const ByteArray = imports.byteArray;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
 
 const Gettext = imports.gettext.domain('printers');
 const _ = Gettext.gettext;
@@ -67,7 +64,7 @@ const PrintersManager = new Lang.Class({
     hbox.add_child(this._jobs);
     this.add_child(hbox);
 
-    this._settings = Convenience.getSettings();
+    this._settings = ExtensionUtils.getSettings();
     this._settings.connect('changed', Lang.bind(this, this.onCupsSignal));
     this._cupsSignal = Gio.DBus.system.signal_subscribe(null, 'org.cups.cupsd.Notifier', null, '/org/cups/cupsd/Notifier', null, Gio.DBusSignalFlags.NONE, this.onCupsSignal.bind(this));
 
@@ -207,7 +204,7 @@ const PrintersManager = new Lang.Class({
 let printersManager;
 
 function init() {
-    Convenience.initTranslations('printers');
+    ExtensionUtils.initTranslations('printers');
 }
 
 function enable() {
