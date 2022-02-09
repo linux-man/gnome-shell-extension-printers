@@ -1,12 +1,10 @@
-const { Clutter, Gio, GLib, St } = imports.gi;
+const { Clutter, Gio, GLib, GObject, St } = imports.gi;
 
-const Lang = imports.lang;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
 const Util = imports.misc.util;
-const Mainloop = imports.mainloop;
 const ByteArray = imports.byteArray;
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -18,6 +16,8 @@ const _ = Gettext.gettext;
 const printerIcon = 'printer-symbolic';
 const warningIcon = 'printer-warning-symbolic';
 const errorIcon = 'printer-error-symbolic';
+
+let _timeout = null;
 
 function spawn_async(args, callback) {
     let [success, pid, in_fd, out_fd, err_fd] = GLib.spawn_async_with_pipes(null, args, null, GLib.SpawnFlags.SEARCH_PATH, null);// | GLib.SpawnFlags.DO_NOT_REAP_CHILD
@@ -42,57 +42,56 @@ function PopupIconMenuItem(icon, label) {
     return _item;
 }
 
-const PrintersManager = new Lang.Class({
-    Name: 'PrintersManager',
-    Extends: PanelMenu.Button,
+const PrintersManager = GObject.registerClass(
+class PrintersManager extends PanelMenu.Button {
 
-    _init: function() {
-        this.parent(0.0, 'PrintersManager');
-    this.connect_to = 0;
-    this.show_icon = 0;
-    this.show_error = true;
-    this.show_jobs = true;
-    this.job_number = true;
-    this.send_to_front = true;
-    this.printWarning = false;
+    _init() {
+        super._init(null, 'PrintersManager')
+        this.connect_to = 0;
+        this.show_icon = 0;
+        this.show_error = true;
+        this.show_jobs = true;
+        this.job_number = true;
+        this.send_to_front = true;
+        this.printWarning = false;
 
-    let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box' });
-    this._icon = new St.Icon({icon_name: printerIcon, style_class: 'system-status-icon'});
-    this._jobs = new St.Label({y_align: Clutter.ActorAlign.CENTER, text: ''});
+        let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box' });
+        this._icon = new St.Icon({icon_name: printerIcon, style_class: 'system-status-icon'});
+        this._jobs = new St.Label({y_align: Clutter.ActorAlign.CENTER, text: ''});
 
-    hbox.add_child(this._icon);
-    hbox.add_child(this._jobs);
-    this.add_child(hbox);
+        hbox.add_child(this._icon);
+        hbox.add_child(this._jobs);
+        this.add_child(hbox);
 
-    this._settings = ExtensionUtils.getSettings();
-    this._settings.connect('changed', Lang.bind(this, this.onCupsSignal));
-    this._cupsSignal = Gio.DBus.system.signal_subscribe(null, 'org.cups.cupsd.Notifier', null, '/org/cups/cupsd/Notifier', null, Gio.DBusSignalFlags.NONE, this.onCupsSignal.bind(this));
+        this._settings = ExtensionUtils.getSettings();
+        this._settings.connect('changed', this.onCupsSignal.bind(this));
+        this._cupsSignal = Gio.DBus.system.signal_subscribe(null, 'org.cups.cupsd.Notifier', null, '/org/cups/cupsd/Notifier', null, Gio.DBusSignalFlags.NONE, this.onCupsSignal.bind(this));
 
-    this.onCupsSignal();
-    },
+        this.onCupsSignal();
+    }
 
-    onShowPrintersClicked: function() {
+    onShowPrintersClicked() {
         if(this.connect_to == 0) Util.spawn(['gnome-control-center', 'printers']);
         else Util.spawn(['system-config-printer']);
-    },
+    }
 
-    onShowJobsClicked: function(item) {
+    onShowJobsClicked(item) {
         Util.spawn(['system-config-printer', '--show-jobs', item.printer]);
-    },
+    }
 
-    onCancelAllJobsClicked: function() {
+    onCancelAllJobsClicked() {
         for(let n = 0; n < this.printers.length; n++) Util.spawn(['cancel', '-a', this.printers[n]]);
-    },
+    }
 
-    onCancelJobClicked: function(item) {
+    onCancelJobClicked(item) {
         Util.spawn(['cancel', item.job]);
-    },
+    }
 
-    onSendToFrontClicked: function(item) {
+    onSendToFrontClicked(item) {
         Util.spawn(['lp', '-i', item.job, '-q 100']);
-    },
+    }
 
-    refresh: function() {
+    refresh() {
         this.connect_to = this._settings.get_enum('connect-to');
         this.show_icon = this._settings.get_enum('show-icon');
         this.show_error = this._settings.get_boolean('show-error');
@@ -102,12 +101,12 @@ const PrintersManager = new Lang.Class({
 
         this.menu.removeAll();
         let printers = PopupIconMenuItem(printerIcon, _('Printers'));
-        printers.connect('activate', Lang.bind(this, this.onShowPrintersClicked));
+        printers.connect('activate', this.onShowPrintersClicked.bind(this));
         this.menu.addMenuItem(printers);
 //Add Printers
-        spawn_async(['/usr/bin/lpstat', '-a'], Lang.bind(this, function(out) {
+        spawn_async(['/usr/bin/lpstat', '-a'], (out) => {
             this.printers = [];
-            spawn_async(['/usr/bin/lpstat', '-d'], Lang.bind(this, function(out2) {//To check default printer
+            spawn_async(['/usr/bin/lpstat', '-d'], (out2) => {//To check default printer
                 if(out2.split(': ')[1] != undefined) out2 = out2.split(': ')[1].trim();
                 else out2 = 'no default';
                 out = out.split('\n');
@@ -121,23 +120,23 @@ const PrintersManager = new Lang.Class({
                             let printerItem = PopupIconMenuItem('emblem-documents-symbolic', printer);
                             if(out2.toString() == printer.toString()) printerItem.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
                             printerItem.printer = printer;
-                            printerItem.connect('activate', Lang.bind(this, this.onShowJobsClicked));
+                            printerItem.connect('activate', this.onShowJobsClicked.bind(this));
                             this.menu.addMenuItem(printerItem);
                         }
                     }
                 }
 //Add Jobs
-                spawn_async(['/usr/bin/lpstat', '-o'], Lang.bind(this, function(out) {
+                spawn_async(['/usr/bin/lpstat', '-o'], (out) => {
 //Cancel all Jobs
                     if(out.length > 0) {
                         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
                         let cancelAll = PopupIconMenuItem('edit-delete-symbolic', _('Cancel all jobs'));
-                        cancelAll.connect('activate', Lang.bind(this, this.onCancelAllJobsClicked));
+                        cancelAll.connect('activate', this.onCancelAllJobsClicked.bind(this));
                         this.menu.addMenuItem(cancelAll);
                     }
                     out = out.split(/\n/);
                     this.jobsCount = out.length - 1
-                    spawn_async(['/usr/bin/lpq', '-a'], Lang.bind(this, function(out2) {
+                    spawn_async(['/usr/bin/lpq', '-a'], (out2) => {
                         out2 = out2.replace(/\n/g, ' ').split(/\s+/);
                         let sendJobs = [];
                         for(var n = 0; n < out.length - 1; n++) {
@@ -156,12 +155,12 @@ const PrintersManager = new Lang.Class({
                             let jobItem = PopupIconMenuItem('edit-delete-symbolic', text);
                             if(out2[out2.indexOf(job) - 2] == 'active') jobItem.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
                             jobItem.job = job;
-                            jobItem.connect('activate', Lang.bind(jobItem, this.onCancelJobClicked));
+                            jobItem.connect('activate', this.onCancelJobClicked.bind(jobItem));
                             this.menu.addMenuItem(jobItem);
                             if(this.send_to_front && out2[out2.indexOf(job) - 2] != 'active' && out2[out2.indexOf(job) - 2] != '1st') {
                                 sendJobs.push(PopupIconMenuItem('go-up-symbolic', text));
                                 sendJobs[sendJobs.length - 1].job = job;
-                                sendJobs[sendJobs.length - 1].connect('activate', Lang.bind(sendJobs[sendJobs.length - 1], this.onSendToFrontClicked));
+                                sendJobs[sendJobs.length - 1].connect('activate', this.onSendToFrontClicked.bind(sendJobs[sendJobs.length - 1]));
                             }
                         }
 //Send to Front
@@ -176,26 +175,26 @@ const PrintersManager = new Lang.Class({
                         this.show();
                         if(this.show_icon == 0 || (this.show_icon == 1 && this.printersCount > 0) || (this.show_icon == 2 && this.jobsCount > 0)) this.show();
                         else this.hide();
-                        spawn_async(['/usr/bin/lpstat', '-l'], Lang.bind(this, function(out) {
+                        spawn_async(['/usr/bin/lpstat', '-l'], (out) => {
                             this.printError = out.indexOf('Unable') >= 0 || out.indexOf(' not ') >= 0 || out.indexOf(' failed') >= 0;
                             if(this.printWarning) this._icon.icon_name = warningIcon;
                             else if(this.show_error && this.printError) this._icon.icon_name = errorIcon;
                             else this._icon.icon_name = printerIcon;
-                        }));
-                    }));
-                }));
-            }));            
-        }));
-    },
+                        });
+                    });
+                });
+            });
+        });
+    }
 
-    onCupsSignal: function() {
+    onCupsSignal() {
         if(this.printWarning == true) return;
         this.printWarning = true;
-        Mainloop.timeout_add_seconds(3, Lang.bind(this, this.warningTimeout));
+        _timeout = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 3, this.warningTimeout.bind(this));
         this.refresh();
-    },
+    }
 
-    warningTimeout: function() {
+    warningTimeout() {
         this.printWarning = false;
         this.refresh();
     }
@@ -213,6 +212,10 @@ function enable() {
 }
 
 function disable() {
+    if(_timeout) {
+        GLib.Source.remove(_timeout);
+        _timeout = null;
+    }
     printersManager.destroy();
     printersManager = null;
 }
