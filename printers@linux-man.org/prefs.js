@@ -2,7 +2,6 @@
 /* exported init buildPrefsWidget */
 
 const { Gio, GObject, Gtk } = imports.gi;
-const Lang = imports.lang;
 
 const Gettext = imports.gettext.domain('printers');
 const _ = Gettext.gettext;
@@ -13,8 +12,7 @@ function init() {
     ExtensionUtils.initTranslations('printers');
 }
 
-const PrintersPrefsWidget = GObject.registerClass(
-class PrintersPrefsWidget extends Gtk.Box {
+const PrintersPrefsWidget = GObject.registerClass(class PrintersPrefsWidget extends Gtk.Box {
     _init() {
         super._init({
             orientation: Gtk.Orientation.VERTICAL,
@@ -40,10 +38,10 @@ class PrintersPrefsWidget extends Gtk.Box {
         model.set(iter, [0, 1], [0, _('Gnome Control Center')]);
         iter = model.append();
         model.set(iter, [0, 1], [1, _('system-config-printer')]);
-        this._interfaceCombo.connect('changed', Lang.bind(this, function(entry) {
+        this._interfaceCombo.connect('changed', (entry) => {
             let [success, iter] = this._interfaceCombo.get_active_iter()
             if (success) this._settings.set_enum('connect-to', this._interfaceCombo.get_model().get_value(iter, 0));
-        }));
+        });
         this.append(label);
         this.append(this._interfaceCombo);
 
@@ -61,10 +59,10 @@ class PrintersPrefsWidget extends Gtk.Box {
         model.set(iter, [0, 1], [1, _('When printers exist')]);
         iter = model.append();
         model.set(iter, [0, 1], [2, _('When printing')]);
-        this._showIconCombo.connect('changed', Lang.bind(this, function(entry) {
+        this._showIconCombo.connect('changed', (entry) => {
             let [success, iter] = this._showIconCombo.get_active_iter()
             if (success) this._settings.set_enum('show-icon', this._showIconCombo.get_model().get_value(iter, 0));
-        }));
+        });
         this.append(label);
         this.append(this._showIconCombo);
 
