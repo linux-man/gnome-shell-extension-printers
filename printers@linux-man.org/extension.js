@@ -4,9 +4,6 @@ const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 
-const Util = imports.misc.util;
-const ByteArray = imports.byteArray;
-
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
@@ -19,19 +16,36 @@ const errorIcon = 'printer-error-symbolic';
 
 let _timeout = null;
 
-function spawn_async(args) {
+function exec_command(args) {
+    try {
+        let proc = Gio.Subprocess.new(args, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+    }
+    catch (e) {
+        logError(e);
+    }
+}
+
+function exec_async(args) {
     return new Promise((resolve, reject) => {
-        let [success, pid, in_fd, out_fd, err_fd] = GLib.spawn_async_with_pipes(null, args, null, GLib.SpawnFlags.SEARCH_PATH, null);// | GLib.SpawnFlags.DO_NOT_REAP_CHILD
         let strOUT = '';
-        if(success) {
-            let out_reader = new Gio.DataInputStream({base_stream: new Gio.UnixInputStream({fd: out_fd})});
-            let [out, size] = out_reader.read_line(null);
-            while (out !== null) {
-                strOUT += ByteArray.toString(out) + '\n';
-                [out, size] = out_reader.read_line(null);
-            }
+        try {
+            let proc = Gio.Subprocess.new(args, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+            proc.communicate_utf8_async(null, null, (proc, res) => {
+                try {
+                    let [, stdout, stderr] = proc.communicate_utf8_finish(res);
+                    if(proc.get_successful()) strOUT = stdout;
+                }
+                catch (e) {
+                    logError(e);
+                }
+                finally {
+                    resolve(strOUT);
+                }
+            });
         }
-        resolve(strOUT);
+        catch (e) {
+            logError(e);
+        }
     })
 }
 
@@ -72,24 +86,24 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
     }
 
     onShowPrintersClicked() {
-        if(this.connect_to == 0) Util.spawn(['gnome-control-center', 'printers']);
-        else Util.spawn(['system-config-printer']);
+        if(this.connect_to == 0) exec_command(['gnome-control-center', 'printers']);
+        else exec_command(['system-config-printer']);
     }
 
     onShowJobsClicked(item) {
-        Util.spawn(['system-config-printer', '--show-jobs', item.printer]);
+        exec_command(['system-config-printer', '--show-jobs', item.printer]);
     }
 
     onCancelAllJobsClicked() {
-        for(let n = 0; n < this.printers.length; n++) Util.spawn(['cancel', '-a', this.printers[n]]);
+        for(let n = 0; n < this.printers.length; n++) exec_command(['cancel', '-a', this.printers[n]]);
     }
 
     onCancelJobClicked(item) {
-        Util.spawn(['cancel', item.job]);
+        exec_command(['cancel', item.job]);
     }
 
     onSendToFrontClicked(item) {
-        Util.spawn(['lp', '-i', item.job, '-q 100']);
+        exec_command(['lp', '-i', item.job, '-q 100']);
     }
 
     async refresh() {
@@ -106,8 +120,8 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         this.menu.addMenuItem(printers);
 //Add Printers
         this.printers = [];
-        let p_list = await spawn_async(['/usr/bin/lpstat', '-a']);
-        let p_default = await spawn_async(['/usr/bin/lpstat', '-d']);
+        let p_list = await exec_async(['/usr/bin/lpstat', '-a']);
+        let p_default = await exec_async(['/usr/bin/lpstat', '-d']);
         if(p_default.split(': ')[1] != undefined) p_default = p_default.split(': ')[1].trim();
         else p_default = 'no default';
         p_list = p_list.split('\n');
@@ -127,7 +141,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
             }
         }
 //Jobs
-        let p_jobs = await spawn_async(['/usr/bin/lpstat', '-o']);
+        let p_jobs = await exec_async(['/usr/bin/lpstat', '-o']);
 //Cancel all Jobs
         if(p_jobs.length > 0) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -138,7 +152,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
 //Add Jobs
         p_jobs = p_jobs.split(/\n/);
         this.jobsCount = p_jobs.length - 1
-        let p_jobs2 = await spawn_async(['/usr/bin/lpq', '-a']);
+        let p_jobs2 = await exec_async(['/usr/bin/lpq', '-a']);
         p_jobs2 = p_jobs2.replace(/\n/g, ' ').split(/\s+/);
         let sendJobs = [];
         for(var n = 0; n < p_jobs.length - 1; n++) {
@@ -177,7 +191,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         this.show();
         if(this.show_icon == 0 || (this.show_icon == 1 && this.printersCount > 0) || (this.show_icon == 2 && this.jobsCount > 0)) this.show();
         else this.hide();
-        let p_error = await spawn_async(['/usr/bin/lpstat', '-l']);
+        let p_error = await exec_async(['/usr/bin/lpstat', '-l']);
         this.printError = p_error.indexOf('Unable') >= 0 || p_error.indexOf(' not ') >= 0 || p_error.indexOf(' failed') >= 0;
         if(this.printWarning) this._icon.icon_name = warningIcon;
         else if(this.show_error && this.printError) this._icon.icon_name = errorIcon;

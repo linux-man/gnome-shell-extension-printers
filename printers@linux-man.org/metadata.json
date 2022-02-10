@@ -8,9 +8,9 @@
   ],
   "settings-schema": "org.gnome.shell.extensions.printers",
   "shell-version": [
-    "41", "42"
+    "40", "41", "42"
   ],
   "url": "https://github.com/linux-man/gnome-shell-extension-printers",
   "uuid": "printers@linux-man.org",
-  "version": 17
+  "version": 18
 }
