@@ -29,3 +29,5 @@ Polish translation by [Piotr Komur](https://github.com/pkomur)
 Italian translation by Albano Battistella
 
 French corrections by Christophe Hortemel
+
+Nederland translation by [Vistaus](https://github.com/Vistaus)
