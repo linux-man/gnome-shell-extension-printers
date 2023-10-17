@@ -69,7 +69,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         this.printWarning = false;
         this.updating = false;
         this.menuIsOpen = false;
-		this._settings = settings;
+        this._settings = settings;
         this._settings.connect('changed', this.onCupsSignal.bind(this));
 
         let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box' });
