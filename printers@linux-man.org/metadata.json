@@ -3,14 +3,15 @@
   "description": "Manage Jobs and Printers. Required package: cups-bsd",
   "extension-id": "printers",
   "name": "Printers",
+  "gettext-domain": "printers",
   "original-authors": [
     "joao.caldas.lopes@gmail.com"
   ],
   "settings-schema": "org.gnome.shell.extensions.printers",
   "shell-version": [
-    "40", "41", "42", "43", "44"
+    "45"
   ],
   "url": "https://github.com/linux-man/gnome-shell-extension-printers",
   "uuid": "printers@linux-man.org",
-  "version": 21
+  "version": 23
 }

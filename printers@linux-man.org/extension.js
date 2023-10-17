@@ -1,14 +1,12 @@
-const { Clutter, Gio, GLib, GObject, St } = imports.gi;
-
-const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
-const Gettext = imports.gettext.domain('printers');
-const _ = Gettext.gettext;
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const printerIcon = 'printer-symbolic';
 const warningIcon = 'printer-warning-symbolic';
@@ -69,6 +67,8 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         this.job_number = true;
         this.send_to_front = true;
         this.printWarning = false;
+        this.updating = false;
+        this.menuIsOpen = false;
 
         let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box' });
         this._icon = new St.Icon({icon_name: printerIcon, style_class: 'system-status-icon'});
@@ -78,8 +78,15 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         hbox.add_child(this._jobs);
         this.add_child(hbox);
 
-        this._settings = ExtensionUtils.getSettings();
+        let extensionObject;
+        extensionObject = Extension.lookupByUUID('printers@linux-man.org');
+        this._settings = extensionObject.getSettings();
         this._settings.connect('changed', this.onCupsSignal.bind(this));
+
+        this.menu.connect('open-state-changed', (self, open) => {
+            this.menuIsOpen = open;
+        });
+
         this._cupsSignal = Gio.DBus.system.signal_subscribe(null, 'org.cups.cupsd.Notifier', null, '/org/cups/cupsd/Notifier', null, Gio.DBusSignalFlags.NONE, this.onCupsSignal.bind(this));
 
         this.onCupsSignal();
@@ -107,6 +114,8 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
     }
 
     async refresh() {
+        if (this.menuIsOpen || this.updating) return;
+        this.updating = true;
         this.connect_to = this._settings.get_enum('connect-to');
         this.show_icon = this._settings.get_enum('show-icon');
         this.show_error = this._settings.get_boolean('show-error');
@@ -185,6 +194,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
             for(let n = 0; n < sendJobs.length; n++) subMenu.menu.addMenuItem(sendJobs[n]);
             this.menu.addMenuItem(subMenu);
         }
+        this.updating = false;
 //Update Icon
         if(this.jobsCount > 0 && this.show_jobs) this._jobs.text = this.jobsCount.toString();
         else this._jobs.text = '';
@@ -213,20 +223,20 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
 
 let printersManager;
 
-function init() {
-    ExtensionUtils.initTranslations('printers');
-}
+export default class Printers extends Extension {
 
-function enable() {
-    printersManager = new PrintersManager();
-    Main.panel.addToStatusArea('printers', printersManager);
-}
-
-function disable() {
-    if(_timeout) {
-        GLib.Source.remove(_timeout);
-        _timeout = null;
+    enable() {
+        printersManager = new PrintersManager();
+        Main.panel.addToStatusArea('printers', printersManager);
     }
-    printersManager.destroy();
-    printersManager = null;
+
+    disable() {
+        if(_timeout) {
+            GLib.Source.remove(_timeout);
+            _timeout = null;
+        }
+        printersManager.destroy();
+        printersManager = null;
+    }
+
 }
