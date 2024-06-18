@@ -48,11 +48,7 @@ function exec_async(args) {
 }
 
 function PopupIconMenuItem(icon, label) {
-    let _item = new PopupMenu.PopupBaseMenuItem();
-    let _icon = new St.Icon({ icon_name: icon, style_class: 'popup-menu-icon' });
-    let _label = new St.Label({ text: label });
-    _item.add(_icon);
-    _item.add(_label);
+    let _item = new PopupMenu.PopupImageMenuItem(label, icon, {});
     return _item;
 }
 
@@ -139,7 +135,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
                 this.printers.push(printer);
                 if(this.connect_to == 1) {
                     let printerItem = PopupIconMenuItem('emblem-documents-symbolic', printer);
-                    if(p_default.toString() == printer.toString()) printerItem.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
+                    if(p_default.toString() == printer.toString()) printerItem.setOrnament(PopupMenu.Ornament.CHECK);
                     printerItem.printer = printer;
                     printerItem.connect('activate', this.onShowJobsClicked.bind(this));
                     this.menu.addMenuItem(printerItem);
@@ -175,7 +171,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
             if(this.job_number) text += ' (' + job + ')';
             text += ' ' + _('at') + ' ' + printer;
             let jobItem = PopupIconMenuItem('edit-delete-symbolic', text);
-            if(p_jobs2[p_jobs2.indexOf(job) - 2] == 'active') jobItem.add(new St.Icon({ icon_name: 'emblem-default-symbolic', style_class: 'popup-menu-icon' }));
+            if(p_jobs2[p_jobs2.indexOf(job) - 2] == 'active') jobItem.setOrnament(PopupMenu.Ornament.CHECK);
             jobItem.job = job;
             jobItem.connect('activate', this.onCancelJobClicked.bind(jobItem));
             this.menu.addMenuItem(jobItem);
