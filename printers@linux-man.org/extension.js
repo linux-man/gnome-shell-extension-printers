@@ -192,13 +192,15 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         if(this.jobsCount > 0 && this.show_jobs) this._jobs.text = this.jobsCount.toString();
         else this._jobs.text = '';
         this.show();
-        if(this.show_icon == 0 || (this.show_icon == 1 && this.printersCount > 0) || (this.show_icon == 2 && this.jobsCount > 0)) this.show();
+        if(this.show_icon == 0 || (this.show_icon == 1 && this.printersCount > 0) || (this.show_icon == 2 && this.jobsCount > 0)) {
+			this.show();
+			let p_error = await exec_async(['/usr/bin/lpstat', '-l']);
+			this.printError = p_error.indexOf('Unable') >= 0 || p_error.indexOf(' not ') >= 0 || p_error.indexOf(' failed') >= 0;
+			if(this.printWarning) this._icon.icon_name = warningIcon;
+			else if(this.show_error && this.printError) this._icon.icon_name = errorIcon;
+			else this._icon.icon_name = printerIcon;
+		}
         else this.hide();
-        let p_error = await exec_async(['/usr/bin/lpstat', '-l']);
-        this.printError = p_error.indexOf('Unable') >= 0 || p_error.indexOf(' not ') >= 0 || p_error.indexOf(' failed') >= 0;
-        if(this.printWarning) this._icon.icon_name = warningIcon;
-        else if(this.show_error && this.printError) this._icon.icon_name = errorIcon;
-        else this._icon.icon_name = printerIcon;
     }
 
     onCupsSignal() {
