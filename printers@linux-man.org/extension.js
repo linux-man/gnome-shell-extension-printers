@@ -83,6 +83,8 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         this._cupsSignal = Gio.DBus.system.signal_subscribe(null, 'org.cups.cupsd.Notifier', null, '/org/cups/cupsd/Notifier', null, Gio.DBusSignalFlags.NONE, this.onCupsSignal.bind(this));
 
         this.onCupsSignal();
+
+        if(!GLib.find_program_in_path('lpq')) exec_command(['notify-send', '-i', 'dialog-warning', '-a', _('Printers'), _('Missing dependency'), _('"lpq" command is missing! Please install "cups-bsd" package (if available).')])
     }
 
     onShowPrintersClicked() {
