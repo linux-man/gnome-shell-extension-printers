@@ -12,8 +12,6 @@ const printerIcon = 'printer-symbolic';
 const warningIcon = 'printer-warning-symbolic';
 const errorIcon = 'printer-error-symbolic';
 
-let _timeout = null;
-
 function exec_command(args) {
     try {
         let proc = Gio.Subprocess.new(args, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
@@ -65,8 +63,9 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         this.printWarning = false;
         this.updating = false;
         this.menuIsOpen = false;
+        this._timeout = 0;
         this._settings = settings;
-        this._settings.connect('changed', this.onCupsSignal.bind(this));
+        this._settingsChangedId = this._settings.connect('changed', this.onCupsSignal.bind(this));
 
         let hbox = new St.BoxLayout({style_class: 'panel-status-menu-box' });
         this._icon = new St.Icon({icon_name: printerIcon, style_class: 'system-status-icon'});
@@ -85,6 +84,23 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         this.onCupsSignal();
 
         if(!GLib.find_program_in_path('lpq')) exec_command(['notify-send', '-i', 'dialog-warning', '-a', _('Printers'), _('Missing dependency'), _('"lpq" command is missing! Please install "cups-bsd" package (if available).')])
+    }
+
+    destroy() {
+        this._destroyed = true;
+        if(this._cupsSignal) {
+            Gio.DBus.system.signal_unsubscribe(this._cupsSignal);
+            this._cupsSignal = 0;
+        }
+        if(this._settingsChangedId) {
+            this._settings.disconnect(this._settingsChangedId);
+            this._settingsChangedId = 0;
+        }
+        if(this._timeout) {
+            GLib.Source.remove(this._timeout);
+            this._timeout = 0;
+        }
+        super.destroy();
     }
 
     onShowPrintersClicked() {
@@ -109,7 +125,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
     }
 
     async refresh() {
-        if (this.menuIsOpen || this.updating) return;
+        if (this._destroyed || this.menuIsOpen || this.updating) return;
         this.updating = true;
         this.connect_to = this._settings.get_enum('connect-to');
         this.show_icon = this._settings.get_enum('show-icon');
@@ -125,7 +141,9 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
 //Add Printers
         this.printers = [];
         let p_list = await exec_async(['/usr/bin/lpstat', '-a']);
+        if(this._destroyed) return;
         let p_default = await exec_async(['/usr/bin/lpstat', '-d']);
+        if(this._destroyed) return;
         if(p_default.split(': ')[1] != undefined) p_default = p_default.split(': ')[1].trim();
         else p_default = 'no default';
         p_list = p_list.split('\n');
@@ -146,6 +164,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         }
 //Jobs
         let p_jobs = await exec_async(['/usr/bin/lpstat', '-o']);
+        if(this._destroyed) return;
 //Cancel all Jobs
         if(p_jobs.length > 0) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -157,6 +176,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         p_jobs = p_jobs.split(/\n/);
         this.jobsCount = p_jobs.length - 1
         let p_jobs2 = await exec_async(['/usr/bin/lpq', '-a']);
+        if(this._destroyed) return;
         p_jobs2 = p_jobs2.replace(/\n/g, ' ').split(/\s+/);
         let sendJobs = [];
         for(var n = 0; n < p_jobs.length - 1; n++) {
@@ -197,6 +217,7 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
         if(this.show_icon == 0 || (this.show_icon == 1 && this.printersCount > 0) || (this.show_icon == 2 && this.jobsCount > 0)) {
 			this.show();
 			let p_error = await exec_async(['/usr/bin/lpstat', '-l']);
+			if(this._destroyed) return;
 			this.printError = p_error.indexOf('Unable') >= 0 || p_error.indexOf(' not ') >= 0 || p_error.indexOf(' failed') >= 0;
 			if(this.printWarning) this._icon.icon_name = warningIcon;
 			else if(this.show_error && this.printError) this._icon.icon_name = errorIcon;
@@ -206,15 +227,17 @@ const PrintersManager = GObject.registerClass(class PrintersManager extends Pane
     }
 
     onCupsSignal() {
-        if(this.printWarning == true) return;
+        if(this._destroyed || this.printWarning == true) return;
         this.printWarning = true;
-        _timeout = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 3, this.warningTimeout.bind(this));
+        this._timeout = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 3, this.warningTimeout.bind(this));
         this.refresh();
     }
 
     warningTimeout() {
+        this._timeout = 0;
         this.printWarning = false;
         this.refresh();
+        return GLib.SOURCE_REMOVE;
     }
 });
 
@@ -224,14 +247,16 @@ export default class Printers extends Extension {
 
     enable() {
         printersManager = new PrintersManager(this.getSettings());
-        Main.panel.addToStatusArea('printers', printersManager);
+        try {
+            Main.panel.addToStatusArea('printers', printersManager);
+        } catch (e) {
+            printersManager.destroy();
+            printersManager = null;
+            throw e;
+        }
     }
 
     disable() {
-        if(_timeout) {
-            GLib.Source.remove(_timeout);
-            _timeout = null;
-        }
         printersManager.destroy();
         printersManager = null;
     }
